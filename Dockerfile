@@ -4,28 +4,34 @@ FROM rust:1.86-slim AS builder
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y curl git build-essential pkg-config libssl-dev \
-    libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev
+    libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN rustup default stable
+# Set default Rust toolchain to stable
+RUN rustup default stable && rustup update
 
-# RUN rustup component add rust-analyzer && \
-#     rustup component add rustfmt && \
-#     rustup component add clippy && \
-#     rustup component add rls rust-analysis rust-src
+# Add only the necessary Rust targets
+RUN rustup target add wasm32-unknown-unknown
 
-# Install Rust toolchains and targets
-RUN rustup update && \
-    rustup target add wasm32-wasip1 wasm32-unknown-unknown x86_64-unknown-linux-gnu --toolchain stable
+# Install Diesel CLI (heavy build)
+RUN cargo install diesel_cli \
+    --no-default-features --features postgres \
+    --locked --jobs 4
 
-# Install Rust dev tools
-RUN cargo install diesel_cli --no-default-features --features postgres --locked && \
-    cargo install trunk wasm-bindgen-cli dioxus-cli --locked
+# Install Trunk (web build tool)
+RUN cargo install trunk --locked --jobs 4
+
+# Install wasm-bindgen (WASM bindings)
+RUN cargo install wasm-bindgen-cli --locked --jobs 4
+
+# Install Dioxus CLI (frontend dev)
+RUN cargo install dioxus-cli --locked --jobs 4
 
 # --------- STAGE 2: Runtime ---------
 FROM debian:bookworm-slim
 
 LABEL maintainer="papoo7jh <papoo7jh@gmail.com>"
-LABEL version="1.0.0"
+LABEL version="1.0.1"
 LABEL description="Rust Tools Optimized"
 
 # Runtime dependencies only
@@ -33,23 +39,23 @@ RUN apt-get update && \
     apt-get install -y git libpq-dev sqlite3 libssl3 ca-certificates unzip curl tree jq && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Workdir
+# Set working directory
 WORKDIR /app
 
-# Copy compiled dev tools from builder
+# Copy compiled binaries
 COPY --from=builder /usr/local/cargo/bin/trunk /usr/local/bin/trunk
 COPY --from=builder /usr/local/cargo/bin/wasm-bindgen /usr/local/bin/wasm-bindgen
 COPY --from=builder /usr/local/cargo/bin/dx /usr/local/bin/dx
 COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
 
-# Copy Rust tooling directories
+# Copy Rust tooling if needed inside container
 COPY --from=builder /usr/local/cargo /usr/local/cargo
 COPY --from=builder /usr/local/rustup /usr/local/rustup
 
-# Set PATH to include Rust tools
-ENV PATH="/usr/local/cargo/bin:/usr/local/rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin:/usr/local/rustup/bin:$PATH"
+# Add Rust to PATH (optional for dev container use)
+ENV PATH="/usr/local/cargo/bin:/usr/local/rustup/bin:$PATH"
 
-# Entrypoint
+# Entrypoint script
 COPY ./entrypoint.sh .
 RUN chmod +x ./entrypoint.sh
 
