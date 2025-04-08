@@ -8,12 +8,12 @@ on:
 
 jobs:
   build:
-    name: Build & Push Multi-Arch Docker Image
+    name: Build & Push
     runs-on: ubuntu-latest
 
     env:
-      DOCKER_USERNAME: ${{ secrets.docker.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.docker.DOCKER_PASSWORD }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
     steps:
       - name: 📥 Checkout repository
@@ -33,8 +33,8 @@ jobs:
       - name: 🔐 Log in to Docker Hub
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
         with:
-          username: ${{ secrets.docker.DOCKER_USERNAME }} #${{ env.DOCKER_USERNAME }}
-          password: ${{ secrets.docker.DOCKER_PASSWORD }} #${{ env.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKER_USERNAME }} #${{ env.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }} #${{ env.DOCKER_PASSWORD }}
 
       - name: 🐳 Build and push Docker image (multi-arch)
         id: push
