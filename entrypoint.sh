@@ -41,6 +41,10 @@ echo ""
 echo "🔹🛠️ Rustup toolchain list:"
 rustup toolchain list
 
+rustup target list | grep installed
+
+rustup component list | grep installed
+
 exec bash
 
 # exec "$@"

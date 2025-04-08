@@ -6,23 +6,20 @@ RUN apt-get update && \
     apt-get install -y curl git build-essential pkg-config libssl-dev \
     libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev
 
+RUN rustup default stable
+
+# RUN rustup component add rust-analyzer && \
+#     rustup component add rustfmt && \
+#     rustup component add clippy && \
+#     rustup component add rls rust-analysis rust-src
+
 # Install Rust toolchains and targets
 RUN rustup update && \
-    rustup install nightly && \
-    rustup target add wasm32-wasip1 wasm32-unknown-unknown --toolchain stable && \
-    rustup target add wasm32-wasip1 wasm32-unknown-unknown --toolchain nightly
+    rustup target add wasm32-wasip1 wasm32-unknown-unknown x86_64-unknown-linux-gnu --toolchain stable
 
 # Install Rust dev tools
 RUN cargo install diesel_cli --no-default-features --features postgres --locked && \
     cargo install trunk wasm-bindgen-cli dioxus-cli --locked
-
-RUN rustup default nightly && \
-    rustup default stable
-
-RUN rustup component add rust-analyzer && \
-    rustup component add rustfmt && \
-    rustup component add clippy && \
-    rustup component add rls rust-analysis rust-src
 
 # --------- STAGE 2: Runtime ---------
 FROM debian:bookworm-slim
