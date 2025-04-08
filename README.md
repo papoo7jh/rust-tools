@@ -10,5 +10,5 @@ create local-network (optionnal - put in comment if not needed)
 ```
 
 ```shell
-docker run -d --name rust-tools --restart always ymk1/rust-tools bash
+docker run --name rust-tools --restart always ymk1/rust-tools bash
 ```

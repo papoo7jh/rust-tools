@@ -45,16 +45,16 @@ COPY --from=builder /usr/local/cargo/bin/wasm-bindgen /usr/local/bin/wasm-bindge
 COPY --from=builder /usr/local/cargo/bin/dx /usr/local/bin/dx
 COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
 
-# Copy optional rust tooling (to use rustup/cargo/rustc inside container)
-COPY --from=builder /usr/local/cargo/bin/cargo /usr/local/bin/cargo
-COPY --from=builder /usr/local/cargo/bin/rustup /usr/local/bin/rustup
-COPY --from=builder /usr/local/rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc /usr/local/bin/rustc
+# Copy Rust tooling directories
+COPY --from=builder /usr/local/cargo /usr/local/cargo
+COPY --from=builder /usr/local/rustup /usr/local/rustup
+
+# Set PATH to include Rust tools
+ENV PATH="/usr/local/cargo/bin:/usr/local/rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin:/usr/local/rustup/bin:$PATH"
 
 # Entrypoint
 COPY ./entrypoint.sh .
 RUN chmod +x ./entrypoint.sh
 
-ENV PATH="/usr/local/cargo/bin:/usr/local/rustup/bin:$PATH"
-
-ENTRYPOINT ["./entrypoint.sh" ]
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["bash"]
