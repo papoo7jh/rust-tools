@@ -1,0 +1,27 @@
+{
+    "name": "rust-tools",
+    "build": {
+      "dockerfile": "../Dockerfile",
+      "context": ".."
+    },
+    "workspaceFolder": "/app",
+    "settings": {
+      "terminal.integrated.defaultProfile.linux": "bash",
+      "editor.formatOnSave": true,
+      "rust-analyzer.cargo.loadOutDirsFromCheck": true,
+      "rust-analyzer.checkOnSave.command": "clippy"
+    },
+    "extensions": [
+      "rust-lang.rust-analyzer",
+      "vadimcn.vscode-lldb",
+      "serayuzgur.crates",
+      "ms-azuretools.vscode-docker"
+    ],
+    "postCreateCommand": "/app/entrypoint.sh",
+    "remoteUser": "root",
+    "forwardPorts": [8000, 8080, 3000], // adapte selon ton projet
+    "mounts": [
+      "source=${localWorkspaceFolder}/assets,target=/app/assets,type=bind"
+    ]
+}
+  

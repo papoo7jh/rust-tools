@@ -1,0 +1,24 @@
+version: '3.9'
+
+networks:
+  local-network:
+    driver: bridge
+
+services:
+  dx-app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: rust-tools  
+    restart: always
+    networks:
+      - local-network
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        com.dilidev.description: "rust tools"
+    volumes:
+    - type: bind
+      source: /var/run/docker.sock
+      target: /var/run/docker.sock
