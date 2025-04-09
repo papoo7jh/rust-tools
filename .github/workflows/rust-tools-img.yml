@@ -1,4 +1,4 @@
-name: Rust Tools Docker Image CI
+name: 🦀 Rust-Tools Docker Img 
 
 on:
   push:

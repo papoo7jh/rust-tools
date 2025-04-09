@@ -1,0 +1,33 @@
+name: 🔄 Sync master with latest tag
+
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write  # nécessaire pour pousser sur master
+
+jobs:
+  update-master:
+    name: 🧬 Update master branch to match the tag commit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout the repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # on récupère tous les tags et l'historique
+
+      - name: 📛 Get latest tag and commit info # ligne 29 : Pour forcer la mise à jour même dans les cas où master est "en retard" ou divergent, il faut remplacer par <git reset --hard "$TAG_NAME">
+        run: |
+          echo "GITHUB_REF=${GITHUB_REF}"
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          echo "Latest tag: $TAG_NAME"
+
+          git checkout master
+          git merge --ff-only "$TAG_NAME"
+
+      - name: 🚀 Push updated master branch
+        run: |
+          git push origin master
