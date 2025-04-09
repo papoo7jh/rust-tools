@@ -6,7 +6,7 @@ on:
       - 'latest'
 
 permissions:
-  contents: write  # nécessaire pour pousser sur master
+  contents: write
   actions: write
 
 jobs:
@@ -15,37 +15,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout the repo
+      - name: 📥 Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # on récupère tous les tags et l'historique
+          fetch-depth: 0
 
-      - name: 📛 Get latest tag and commit info
+      - name: 🛠 Reset master to latest tag and remove workflows
         run: |
-          echo "GITHUB_REF=${GITHUB_REF}"
           TAG_NAME="${GITHUB_REF#refs/tags/}"
-          echo "Latest tag: $TAG_NAME"
+          echo "Tag: $TAG_NAME"
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git checkout master
-          
-          # 🔀 On applique le tag (fast-forward)
-          git merge --ff-only "$TAG_NAME"
+          git reset --hard "$TAG_NAME"
 
-          # 🛡️ Supprime les fichiers de workflows du staging pour éviter les erreurs
-          git restore --staged .github/workflows || true
-          git restore .github/workflows || true
+          # Supprimer les workflows localement
+          rm -rf .github/workflows
 
-          # ✅ Commit uniquement si il reste des modifs utiles
-          if ! git diff --cached --quiet; then
-            git commit -m "Sync master with tag $TAG_NAME (excluding workflows)"
-          else
-            echo "✅ Nothing to commit"
-          fi
-
-      - name: 🚀 Push updated master branch
-        run: |
+          git add -A
+          git commit -m "Sync master with tag $TAG_NAME (workflows removed)"
           git push origin master
-          
+
