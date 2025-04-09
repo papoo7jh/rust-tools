@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write  # nécessaire pour pousser sur master
+  actions: write
+
 
 jobs:
   update-master:
