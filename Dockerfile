@@ -8,10 +8,10 @@ RUN apt-get update && \
     libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev sudo && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Créer le répertoire sudoers.d si besoin + utilisateur rust-tools
-RUN mkdir -p /etc/sudoers.d && \
-    useradd -m -s /bin/bash rust-tools && \
-    echo "rust-tools ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/rust-tools
+# # Créer le répertoire sudoers.d si besoin + utilisateur rust-tools
+# RUN mkdir -p /etc/sudoers.d && \
+#     useradd -m -s /bin/bash rust-tools && \
+#     echo "rust-tools ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/rust-tools
 
 # Set default Rust toolchain to stable
 RUN rustup default stable && rustup update
@@ -51,6 +51,10 @@ LABEL org.opencontainers.image.source="https://github.com/papoo7jh/rust-tools"
 RUN apt-get update && \
     apt-get install -y git libpq-dev sqlite3 libssl3 ca-certificates unzip curl tree jq sudo && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /etc/sudoers.d && \
+useradd -m -s /bin/bash rust-tools && \
+echo "rust-tools ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/rust-tools
 
 # Set working directory
 WORKDIR /home/rust-tools
