@@ -3,7 +3,8 @@ FROM rust:1.86-slim AS builder
 
 # Après installation des paquets
 RUN apt-get update && \
-    apt-get install -y git libpq-dev sqlite3 libssl3 ca-certificates unzip curl tree jq sudo bash && \
+    apt-get install -y curl git build-essential pkg-config libssl-dev \
+    libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Crée l’utilisateur ici (meilleure pratique)
@@ -33,6 +34,8 @@ RUN cargo install dioxus-cli --locked --jobs 4
 
 # --------- STAGE 2: Runtime ---------
 FROM debian:bookworm-slim
+
+ARG VERSION=latest
 
 LABEL org.opencontainers.image.description="Rust Tools Optimized"
 LABEL org.opencontainers.image.url="https://hub.docker.com/r/ymk1/rust-tools"
