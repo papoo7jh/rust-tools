@@ -10,6 +10,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  attestations: write
 
 env:
   REGISTRY: docker.io
@@ -99,5 +100,6 @@ jobs:
         uses: actions/attest-build-provenance@v2
         with:
           subject-name: index.docker.io/ymk1/rust-tools
+          subject-path: '${{ github.workspace }}/rust-tools'
           subject-digest: ${{ needs.build.outputs.digest }}
           push-to-registry: true
