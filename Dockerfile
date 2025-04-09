@@ -1,11 +1,15 @@
 # --------- STAGE 1: Builder ---------
 FROM rust:1.86-slim AS builder
 
-# Install system dependencies
+# Après installation des paquets
 RUN apt-get update && \
-    apt-get install -y curl git build-essential pkg-config libssl-dev \
-    libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev && \
+    apt-get install -y git libpq-dev sqlite3 libssl3 ca-certificates unzip curl tree jq sudo bash && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Crée l’utilisateur ici (meilleure pratique)
+# Créer l'utilisateur rust-tools avec un home
+RUN useradd -m -s /bin/bash rust-tools && \
+    echo "rust-tools ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/rust-tools
 
 # Set default Rust toolchain to stable
 RUN rustup default stable && rustup update
@@ -37,14 +41,15 @@ LABEL org.opencontainers.image.licenses="GNU GENERAL PUBLIC LICENSE"
 LABEL org.opencontainers.image.title="Rust Tools"
 LABEL org.opencontainers.image.base.name="hub.docker.com/r/ymk1/rust-tools"
 LABEL org.opencontainers.image.version="${VERSION}"
+LABEL org.opencontainers.image.source="https://github.com/papoo7jh/rust-tools"
 
 # Runtime dependencies only
 RUN apt-get update && \
-    apt-get install -y git libpq-dev sqlite3 libssl3 ca-certificates unzip curl tree jq && \
+    apt-get install -y git libpq-dev sqlite3 libssl3 ca-certificates unzip curl tree jq sudo && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
-WORKDIR /app
+WORKDIR /home/rust-tools
 
 # Copy compiled binaries
 COPY --from=builder /usr/local/cargo/bin/trunk /usr/local/bin/trunk
@@ -60,9 +65,12 @@ COPY --from=builder /usr/local/rustup /usr/local/rustup
 ENV PATH="/usr/local/cargo/bin:/usr/local/rustup/bin:$PATH"
 
 # Entrypoint script
-COPY ./README.md .
-COPY ./entrypoint.sh .
-RUN chmod +x ./entrypoint.sh
+COPY ./README.md /home/rust-tools/
+COPY ./entrypoint.sh /home/rust-tools/
+RUN chmod +x /home/rust-tools/entrypoint.sh && chown -R rust-tools:rust-tools /home/rust-tools
+
+USER rust-tools
+WORKDIR /home/rust-tools
 
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["bash"]

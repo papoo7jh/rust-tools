@@ -13,39 +13,50 @@ set -o errexit
 set -o nounset
 IFS=$'\n\t'
 
-echo ">> 🦀 Rust Dev Container tools 🔧 executing ..."
+echo ">> 🦀 Rust Dev Container tools 🔧  executing ..."
 echo ' ____  _   _ ____ _____   _____ ___   ___  _     ____  
 |  _ \| | | / ___|_   _| |_   _/ _ \ / _ \| |   / ___| 
 | |_) | | | \___ \ | |     | || | | | | | | |   \___ \ 
 |  _ <| |_| |___) || |     | || |_| | |_| | |___ ___) |
 |_| \_\\___/|____/ |_|     |_| \___/ \___/|_____|____/ 
 '
+
+# Créer l'utilisateur rust-tools s'il n'existe pas
+if ! id "rust-tools" >/dev/null 2>&1; then
+  adduser --disabled-password --gecos "" rust-tools
+fi
+
+# Déplacer le README pour que rust-tools y ait accès
+cp -pr ./README.md /home/rust-tools/
+chown -R rust-tools:rust-tools /home/rust-tools
+
+# Ajoute sudo si nécessaire (à activer si tu veux vraiment du sudo dans ton conteneur)
+echo "rust-tools ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/rust-tools
+
+# Afficher les outils installés
+su - rust-tools <<EOF
 echo ""
 rustup default stable
 echo ""
 
 echo ">> 🦀 Rust Dev Container ready 🚀 !"
 echo ""
-echo "🔹💻 Current user: $(whoami)"
+echo "🔹💻 Current user: \$(whoami)"
 echo ""
-echo "🔹🛠️ Rustup version: $(rustup --version)"
-echo ""
-echo "🔹📦 Cargo version: $(cargo --version)"
-echo ""
-echo "🔹🗃️ Diesel version: $(diesel --version)"
-echo ""
-echo "🔹🌐 Trunk version: $(trunk --version)"
-echo ""
-echo "🔹🧬 Dioxus version: $(dx --version)"
+echo "🔹🛠️ Rustup version: \$(rustup --version)"
+echo "🔹📦 Cargo version: \$(cargo --version)"
+echo "🔹🗃️ Diesel version: \$(diesel --version)"
+echo "🔹🌐 Trunk version: \$(trunk --version)"
+echo "🔹🧬 Dioxus version: \$(dx --version)"
 echo ""
 echo "🔹🛠️ Rustup toolchain list:"
 rustup toolchain list
-
 rustup target list | grep installed
-
 rustup component list | grep installed
 
-exec bash
+# Garde le conteneur en vie
+exec bash || exec sh
+EOF
 
 # exec "$@"
 # # Si aucune commande n’est fournie, démarrer bash

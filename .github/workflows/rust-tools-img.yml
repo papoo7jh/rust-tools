@@ -66,6 +66,18 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Docker Scout
+        id: docker-scout
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: docker/scout-action@v1
+        with:
+          command: compare
+          image: ${{ steps.meta.outputs.tags }}
+          to-env: production
+          ignore-unchanged: true
+          only-severities: critical,high
+          #github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: 🛠️ Build & 🚀 Push - 🐳 docker img
         uses: docker/build-push-action@v5
         with:
