@@ -67,7 +67,6 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: 🛠️ Build & 🚀 Push - 🐳 docker img
-        id: push
         uses: docker/build-push-action@v5
         with:
           context: .
