@@ -36,6 +36,7 @@ LABEL org.opencontainers.image.vendor="papoo7jh <papoo7jh@gmail.com>"
 LABEL org.opencontainers.image.licenses=""
 LABEL org.opencontainers.image.title="Rust Tools"
 LABEL org.opencontainers.image.base.name="hub.docker.com/r/ymk1/rust-tools"
+LABEL org.opencontainers.image.version="${VERSION}"
 
 # Runtime dependencies only
 RUN apt-get update && \
