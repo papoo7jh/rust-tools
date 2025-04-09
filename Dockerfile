@@ -2,14 +2,15 @@
 FROM rust:1.86-slim AS builder
 
 # Après installation des paquets
+# Installer les dépendances d’abord, y compris sudo
 RUN apt-get update && \
     apt-get install -y curl git build-essential pkg-config libssl-dev \
-    libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev && \
+    libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev sudo && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Crée l’utilisateur ici (meilleure pratique)
-# Créer l'utilisateur rust-tools avec un home
-RUN useradd -m -s /bin/bash rust-tools && \
+# Créer le répertoire sudoers.d si besoin + utilisateur rust-tools
+RUN mkdir -p /etc/sudoers.d && \
+    useradd -m -s /bin/bash rust-tools && \
     echo "rust-tools ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/rust-tools
 
 # Set default Rust toolchain to stable
