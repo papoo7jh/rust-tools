@@ -31,7 +31,6 @@ RUN cargo install dioxus-cli --locked --jobs 4
 FROM debian:bookworm-slim
 
 LABEL maintainer="papoo7jh <papoo7jh@gmail.com>"
-LABEL version="1.0.1"
 LABEL description="Rust Tools Optimized"
 
 # Runtime dependencies only
