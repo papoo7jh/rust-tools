@@ -60,6 +60,7 @@ COPY --from=builder /usr/local/rustup /usr/local/rustup
 ENV PATH="/usr/local/cargo/bin:/usr/local/rustup/bin:$PATH"
 
 # Entrypoint script
+COPY ./README.md .
 COPY ./entrypoint.sh .
 RUN chmod +x ./entrypoint.sh
 
