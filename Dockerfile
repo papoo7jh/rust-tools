@@ -30,8 +30,12 @@ RUN cargo install dioxus-cli --locked --jobs 4
 # --------- STAGE 2: Runtime ---------
 FROM debian:bookworm-slim
 
-LABEL maintainer="papoo7jh <papoo7jh@gmail.com>"
-LABEL description="Rust Tools Optimized"
+LABEL org.opencontainers.image.description="Rust Tools Optimized"
+LABEL org.opencontainers.image.url="https://hub.docker.com/r/ymk1/rust-tools"
+LABEL org.opencontainers.image.vendor="papoo7jh <papoo7jh@gmail.com>"
+LABEL org.opencontainers.image.licenses=""
+LABEL org.opencontainers.image.title="Rust Tools"
+LABEL org.opencontainers.image.base.name="hub.docker.com/r/ymk1/rust-tools"
 
 # Runtime dependencies only
 RUN apt-get update && \
