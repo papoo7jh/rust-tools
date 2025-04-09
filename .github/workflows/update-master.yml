@@ -35,6 +35,6 @@ jobs:
           rm -rf .github/workflows
 
           git add -A
-          git commit -m "Sync master with tag $TAG_NAME (workflows removed)"
-          git push origin master
+          git commit -m "Sync master with tag $TAG_NAME"
+          git push -f origin master
 
