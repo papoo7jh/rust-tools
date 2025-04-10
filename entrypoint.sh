@@ -27,7 +27,7 @@ if ! id "rust-tools" >/dev/null 2>&1; then
 fi
 
 # Déplacer le README pour que rust-tools y ait accès
-cp -pr ./README.md /home/rust-tools/
+# cp -pr ./README.md /home/rust-tools/
 chown -R rust-tools:rust-tools /home/rust-tools
 
 # Ajoute sudo si nécessaire (à activer si tu veux vraiment du sudo dans ton conteneur)
