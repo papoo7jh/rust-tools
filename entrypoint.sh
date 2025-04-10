@@ -23,15 +23,15 @@ echo ' ____  _   _ ____ _____   _____ ___   ___  _     ____
 
 # Créer l'utilisateur rust-tools s'il n'existe pas
 if ! id "rust-tools" >/dev/null 2>&1; then
-  adduser --disabled-password --gecos "" rust-tools
+  sudo adduser --disabled-password --gecos "" rust-tools
 fi
 
 # Déplacer le README pour que rust-tools y ait accès
 # cp -pr ./README.md /home/rust-tools/
-chown -R rust-tools:rust-tools /home/rust-tools
+sudo chown -R rust-tools:rust-tools /home/rust-tools
 
 # Ajoute sudo si nécessaire (à activer si tu veux vraiment du sudo dans ton conteneur)
-echo "rust-tools ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/rust-tools
+sudo echo "rust-tools ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/rust-tools
 
 # Afficher les outils installés
 su - rust-tools <<EOF
