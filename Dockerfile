@@ -73,7 +73,7 @@ COPY --from=builder /usr/local/rustup /usr/local/rustup
 ENV PATH="/usr/local/cargo/bin:/usr/local/rustup/bin:$PATH"
 
 # Entrypoint script
-COPY ./README.md /home/rust-tools/
+# COPY ./README.md /home/rust-tools/
 COPY ./entrypoint.sh /home/rust-tools/
 RUN chmod +x /home/rust-tools/entrypoint.sh && chown -R rust-tools:rust-tools /home/rust-tools
 
