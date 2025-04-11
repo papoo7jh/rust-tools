@@ -19,8 +19,8 @@ RUN apk update && \
     xz 
 
 # Installer rustup + Rust (stable) et les composants nécessaires
-RUN /root/.cargo/bin/rustup component add rustfmt clippy rust-analyzer llvm-tools rustc-dev && \
-    /root/.cargo/bin/rustup target add x86_64-unknown-linux-gnu wasm32-unknown-unknown wasm32-wasip1 x86_64-pc-windows-msvc
+RUN rustup component add rustfmt clippy rust-analyzer llvm-tools rustc-dev && \
+    rustup target add x86_64-unknown-linux-gnu wasm32-unknown-unknown wasm32-wasip1 x86_64-pc-windows-msvc
 
 # Ajouter Rust au PATH
 ENV PATH="/root/.cargo/bin:$PATH"
