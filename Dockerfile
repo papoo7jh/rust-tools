@@ -14,13 +14,11 @@ RUN apk update && \
     git \
     clang \
     cmake \
-    libsqlite3-dev \
-    sqlite-dev \
-    sqlite3 \  
+    sqlite-dev \   
+    sqlite \       
     unzip \
-    libpq-dev \
-    xz-utils \
-    xz 
+    libpq-dev \     
+    xz        
 
 # Installer rustup + Rust (stable) et les composants nécessaires
 RUN rustup component add rustfmt clippy rust-analyzer llvm-tools rustc-dev && \

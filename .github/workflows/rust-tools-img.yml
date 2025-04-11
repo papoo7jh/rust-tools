@@ -21,7 +21,7 @@ jobs:
 
   build:
     name: 🔧 Build Docker Image
-    runs-on: [self-hosted, windows] # ubuntu-latest
+    runs-on: ubuntu-latest
     outputs:
       digest: ${{ steps.push.outputs.digest }}
       tags: ${{ steps.meta.outputs.tags }}
