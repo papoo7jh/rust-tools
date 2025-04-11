@@ -1,74 +1,59 @@
-# --------- STAGE 1: Builder ---------
-FROM debian:bookworm-slim AS builder
+# --------- STAGE UNIQUE: Alpine Rust Dev ---------
+FROM rust:1.86.0-alpine
 
-# Variables
-ENV RUST_VERSION=1.78.0
-
-# Installer les outils nécessaires pour compiler Rust et les crates
-RUN apt-get update && \
-    apt-get install -y curl git build-essential pkg-config libssl-dev \
-    libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev unzip xz-utils sudo && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-
-# Installer rustup + Rust (stable)
-RUN curl https://sh.rustup.rs -sSf | bash -s -- -y --default-toolchain $RUST_VERSION && \
-    /root/.cargo/bin/rustup component add rustfmt clippy && \
-    /root/.cargo/bin/rustup target add wasm32-unknown-unknown
-
-ENV PATH="/root/.cargo/bin:$PATH"
-
-# Install Diesel CLI (heavy build)
-RUN cargo install diesel_cli \
-    --no-default-features --features postgres \
-    --locked --jobs 4
-
-# Installer les outils Rust (via cargo)
-RUN cargo install diesel_cli --no-default-features --features postgres --locked --jobs 4
-RUN cargo install trunk --locked --jobs 4
-RUN cargo install wasm-bindgen-cli --locked --jobs 4
-RUN cargo install dioxus-cli --locked --jobs 4
-
-# --------- STAGE 2: Runtime ---------
-FROM debian:bookworm-slim
-
-ARG VERSION=latest
-
-LABEL org.opencontainers.image.description="Rust Tools Optimized"
-LABEL org.opencontainers.image.url="https://hub.docker.com/r/ymk1/rust-tools"
-LABEL org.opencontainers.image.vendor="papoo7jh <papoo7jh@gmail.com>"
-LABEL org.opencontainers.image.licenses="GNU GENERAL PUBLIC LICENSE"
-LABEL org.opencontainers.image.title="Rust Tools"
-LABEL org.opencontainers.image.version="${VERSION}"
-
-# Runtime dependencies only
-RUN apt-get update && \
-    apt-get install -y git libpq-dev sqlite3 libssl3 ca-certificates curl unzip tree jq sudo && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Créer l'utilisateur (runtime uniquement)
-RUN useradd -m -s /bin/bash rust-tools && \
-    mkdir -p /etc/sudoers.d && \
-    echo "rust-tools ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/rust-tools
-
-# Copie des outils compilés
-COPY --from=builder /root/.cargo/bin/* /usr/local/bin/
-COPY --from=builder /root/.cargo /home/rust-tools/.cargo
-COPY --from=builder /root/.rustup /home/rust-tools/.rustup
-
-# Fixes pour PATH (devcontainer, VSCode)
+ENV RUST_VERSION=1.86.0-alpine
 ENV PATH="/home/rust-tools/.cargo/bin:/home/rust-tools/.rustup/bin:$PATH"
 
-# Copie de l’entrée et droits
-COPY ./entrypoint.sh /home/rust-tools/
+# Créer l'utilisateur rust-tools avec l'UID 0 (donc root)
+RUN adduser -D -s /bin/sh -u 0 rust-tools
+
+# Dépendances pour compiler Dioxus, Diesel, WASM
+RUN apk update && apk add --no-cache \
+    bash \
+    curl \
+    git \
+    clang \
+    cmake \
+    sqlite-dev \
+    postgresql-dev \
+    openssl-dev \
+    libffi-dev \
+    build-base \
+    unzip \
+    xz \
+    tree \
+    jq
+
+# Installer les cibles et composants rust nécessaires
+RUN rustup component add \
+    rustfmt \
+    clippy \
+    rust-analyzer \
+    llvm-tools-preview \
+    rust-docs \
+    rust-docs-json \
+    rustc-dev && \
+    rustup target add \
+    x86_64-unknown-linux-musl \
+    x86_64-unknown-linux-gnu \
+    wasm32-unknown-unknown \
+    wasm32-wasip1 \
+    x86_64-pc-windows-msvc
+
+# Installer les outils Rust
+RUN cargo install diesel_cli --no-default-features --features postgres --locked --jobs 4 && \
+    cargo install wasm-bindgen-cli --locked --jobs 4 && \
+    cargo install dioxus-cli --locked --jobs 4
+
+# Copier un entrypoint si besoin
+COPY ./entrypoint.sh /home/rust-tools/entrypoint.sh
 RUN chmod +x /home/rust-tools/entrypoint.sh && chown -R rust-tools:rust-tools /home/rust-tools
 
-# Utilisateur et démarrage
 USER rust-tools
 WORKDIR /home/rust-tools
 
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["bash"]
+
 
 
 
@@ -77,10 +62,10 @@ CMD ["bash"]
 
 # # Après installation des paquets
 # # Installer les dépendances d’abord, y compris sudo
-# RUN apt-get update && \
-#     apt-get install -y curl git build-essential pkg-config libssl-dev \
+# RUN apk update && \
+#     apk install -y curl git build-essential pkg-config libssl-dev \
 #     libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev sudo && \
-#     apt-get clean && rm -rf /var/lib/apt/lists/*
+#     apk clean && rm -rf /var/lib/apt/lists/*
 
 # # # Créer le répertoire sudoers.d si besoin + utilisateur rust-tools
 # # RUN mkdir -p /etc/sudoers.d && \
@@ -122,9 +107,9 @@ CMD ["bash"]
 # LABEL org.opencontainers.image.source="https://github.com/papoo7jh/rust-tools"
 
 # # Runtime dependencies only
-# RUN apt-get update && \
-#     apt-get install -y git libpq-dev sqlite3 libssl3 ca-certificates unzip curl tree jq sudo && \
-#     apt-get clean && rm -rf /var/lib/apt/lists/*
+# RUN apk update && \
+#     apk install -y git libpq-dev sqlite3 libssl3 ca-certificates unzip curl tree jq sudo && \
+#     apk clean && rm -rf /var/lib/apt/lists/*
 
 # RUN mkdir -p /etc/sudoers.d && \
 # useradd -m -s /bin/bash rust-tools && \

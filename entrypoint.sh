@@ -55,7 +55,7 @@ rustup target list | grep installed
 rustup component list | grep installed
 
 # Garde le conteneur en vie
-exec bash || exec sh
+exec sh
 EOF
 
 # exec "$@"
