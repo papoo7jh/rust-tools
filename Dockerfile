@@ -32,7 +32,6 @@ RUN rustup component add \
     rust-analyzer \
     llvm-tools-preview \
     rust-docs \
-    rust-docs-json \
     rustc-dev && \
     rustup target add \
     x86_64-unknown-linux-musl \
