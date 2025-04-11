@@ -14,8 +14,12 @@ RUN apk update && \
     git \
     clang \
     cmake \
-    sqlite-dev \  
+    libsqlite3-dev \
+    sqlite-dev \
+    sqlite3 \  
     unzip \
+    libpq-dev \
+    xz-utils \
     xz 
 
 # Installer rustup + Rust (stable) et les composants nécessaires
