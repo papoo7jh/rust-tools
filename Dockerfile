@@ -4,8 +4,9 @@ FROM rust:1.86.0-alpine
 ENV RUST_VERSION=1.86.0-alpine
 ENV PATH="/home/rust-tools/.cargo/bin:/home/rust-tools/.rustup/bin:$PATH"
 
-# Créer l'utilisateur rust-tools avec l'UID 0 (donc root)
-RUN adduser -D -s /bin/sh -u 0 rust-tools
+# Créer l'utilisateur rust-tools avec un UID personnalisé, mais appartenant au groupe root
+RUN adduser -D -s /bin/sh -u 1000 rust-tools && \
+    addgroup rust-tools root
 
 # Dépendances pour compiler Dioxus, Diesel, WASM
 RUN apk update && apk add --no-cache \
@@ -53,6 +54,7 @@ USER rust-tools
 WORKDIR /home/rust-tools
 
 ENTRYPOINT ["./entrypoint.sh"]
+    
 
 
 
