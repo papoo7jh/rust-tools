@@ -2,13 +2,14 @@
 FROM debian:bookworm-slim AS builder
 
 # Variables
-ENV RUST_VERSION=1.76.0
+ENV RUST_VERSION=1.78.0
 
 # Installer les outils nécessaires pour compiler Rust et les crates
 RUN apt-get update && \
     apt-get install -y curl git build-essential pkg-config libssl-dev \
-    libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev unzip xz-utils && \
+    libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev unzip xz-utils sudo && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
+
 
 # Installer rustup + Rust (stable)
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y --default-toolchain $RUST_VERSION && \
@@ -16,6 +17,11 @@ RUN curl https://sh.rustup.rs -sSf | bash -s -- -y --default-toolchain $RUST_VER
     /root/.cargo/bin/rustup target add wasm32-unknown-unknown
 
 ENV PATH="/root/.cargo/bin:$PATH"
+
+# Install Diesel CLI (heavy build)
+RUN cargo install diesel_cli \
+    --no-default-features --features postgres \
+    --locked --jobs 4
 
 # Installer les outils Rust (via cargo)
 RUN cargo install diesel_cli --no-default-features --features postgres --locked --jobs 4
