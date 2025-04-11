@@ -1,36 +1,26 @@
 # --------- STAGE 1: Builder ---------
-FROM rust:1.86-slim AS builder
+FROM debian:bookworm-slim AS builder
 
-# Après installation des paquets
-# Installer les dépendances d’abord, y compris sudo
+# Variables
+ENV RUST_VERSION=1.76.0
+
+# Installer les outils nécessaires pour compiler Rust et les crates
 RUN apt-get update && \
     apt-get install -y curl git build-essential pkg-config libssl-dev \
-    libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev sudo && \
+    libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev unzip xz-utils && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# # Créer le répertoire sudoers.d si besoin + utilisateur rust-tools
-# RUN mkdir -p /etc/sudoers.d && \
-#     useradd -m -s /bin/bash rust-tools && \
-#     echo "rust-tools ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/rust-tools
+# Installer rustup + Rust (stable)
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y --default-toolchain $RUST_VERSION && \
+    /root/.cargo/bin/rustup component add rustfmt clippy && \
+    /root/.cargo/bin/rustup target add wasm32-unknown-unknown
 
-# Set default Rust toolchain to stable
-RUN rustup default stable && rustup update
+ENV PATH="/root/.cargo/bin:$PATH"
 
-# Add only the necessary Rust targets
-RUN rustup target add wasm32-unknown-unknown
-
-# Install Diesel CLI (heavy build)
-RUN cargo install diesel_cli \
-    --no-default-features --features postgres \
-    --locked --jobs 4
-
-# Install Trunk (web build tool)
+# Installer les outils Rust (via cargo)
+RUN cargo install diesel_cli --no-default-features --features postgres --locked --jobs 4
 RUN cargo install trunk --locked --jobs 4
-
-# Install wasm-bindgen (WASM bindings)
 RUN cargo install wasm-bindgen-cli --locked --jobs 4
-
-# Install Dioxus CLI (frontend dev)
 RUN cargo install dioxus-cli --locked --jobs 4
 
 # --------- STAGE 2: Runtime ---------
@@ -43,42 +33,120 @@ LABEL org.opencontainers.image.url="https://hub.docker.com/r/ymk1/rust-tools"
 LABEL org.opencontainers.image.vendor="papoo7jh <papoo7jh@gmail.com>"
 LABEL org.opencontainers.image.licenses="GNU GENERAL PUBLIC LICENSE"
 LABEL org.opencontainers.image.title="Rust Tools"
-LABEL org.opencontainers.image.base.name="hub.docker.com/r/ymk1/rust-tools"
 LABEL org.opencontainers.image.version="${VERSION}"
-LABEL org.opencontainers.image.source="https://github.com/papoo7jh/rust-tools"
 
 # Runtime dependencies only
 RUN apt-get update && \
-    apt-get install -y git libpq-dev sqlite3 libssl3 ca-certificates unzip curl tree jq sudo && \
+    apt-get install -y git libpq-dev sqlite3 libssl3 ca-certificates curl unzip tree jq sudo && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /etc/sudoers.d && \
-useradd -m -s /bin/bash rust-tools && \
-echo "rust-tools ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/rust-tools
+# Créer l'utilisateur (runtime uniquement)
+RUN useradd -m -s /bin/bash rust-tools && \
+    mkdir -p /etc/sudoers.d && \
+    echo "rust-tools ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/rust-tools
 
-# Set working directory
-WORKDIR /home/rust-tools
+# Copie des outils compilés
+COPY --from=builder /root/.cargo/bin/* /usr/local/bin/
+COPY --from=builder /root/.cargo /home/rust-tools/.cargo
+COPY --from=builder /root/.rustup /home/rust-tools/.rustup
 
-# Copy compiled binaries
-COPY --from=builder /usr/local/cargo/bin/trunk /usr/local/bin/trunk
-COPY --from=builder /usr/local/cargo/bin/wasm-bindgen /usr/local/bin/wasm-bindgen
-COPY --from=builder /usr/local/cargo/bin/dx /usr/local/bin/dx
-COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
+# Fixes pour PATH (devcontainer, VSCode)
+ENV PATH="/home/rust-tools/.cargo/bin:/home/rust-tools/.rustup/bin:$PATH"
 
-# Copy Rust tooling if needed inside container
-COPY --from=builder /usr/local/cargo /usr/local/cargo
-COPY --from=builder /usr/local/rustup /usr/local/rustup
-
-# Add Rust to PATH (optional for dev container use)
-ENV PATH="/usr/local/cargo/bin:/usr/local/rustup/bin:$PATH"
-
-# Entrypoint script
-# COPY ./README.md /home/rust-tools/
+# Copie de l’entrée et droits
 COPY ./entrypoint.sh /home/rust-tools/
 RUN chmod +x /home/rust-tools/entrypoint.sh && chown -R rust-tools:rust-tools /home/rust-tools
 
+# Utilisateur et démarrage
 USER rust-tools
 WORKDIR /home/rust-tools
 
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["bash"]
+
+
+
+# # --------- STAGE 1: Builder ---------
+# FROM rust:1.86-slim AS builder
+
+# # Après installation des paquets
+# # Installer les dépendances d’abord, y compris sudo
+# RUN apt-get update && \
+#     apt-get install -y curl git build-essential pkg-config libssl-dev \
+#     libpq-dev libclang-dev clang cmake sqlite3 libsqlite3-dev sudo && \
+#     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# # # Créer le répertoire sudoers.d si besoin + utilisateur rust-tools
+# # RUN mkdir -p /etc/sudoers.d && \
+# #     useradd -m -s /bin/bash rust-tools && \
+# #     echo "rust-tools ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/rust-tools
+
+# # Set default Rust toolchain to stable
+# RUN rustup default stable && rustup update
+
+# # Add only the necessary Rust targets
+# RUN rustup target add wasm32-unknown-unknown
+
+# # Install Diesel CLI (heavy build)
+# RUN cargo install diesel_cli \
+#     --no-default-features --features postgres \
+#     --locked --jobs 4
+
+# # Install Trunk (web build tool)
+# RUN cargo install trunk --locked --jobs 4
+
+# # Install wasm-bindgen (WASM bindings)
+# RUN cargo install wasm-bindgen-cli --locked --jobs 4
+
+# # Install Dioxus CLI (frontend dev)
+# RUN cargo install dioxus-cli --locked --jobs 4
+
+# # --------- STAGE 2: Runtime ---------
+# FROM debian:bookworm-slim
+
+# ARG VERSION=latest
+
+# LABEL org.opencontainers.image.description="Rust Tools Optimized"
+# LABEL org.opencontainers.image.url="https://hub.docker.com/r/ymk1/rust-tools"
+# LABEL org.opencontainers.image.vendor="papoo7jh <papoo7jh@gmail.com>"
+# LABEL org.opencontainers.image.licenses="GNU GENERAL PUBLIC LICENSE"
+# LABEL org.opencontainers.image.title="Rust Tools"
+# LABEL org.opencontainers.image.base.name="hub.docker.com/r/ymk1/rust-tools"
+# LABEL org.opencontainers.image.version="${VERSION}"
+# LABEL org.opencontainers.image.source="https://github.com/papoo7jh/rust-tools"
+
+# # Runtime dependencies only
+# RUN apt-get update && \
+#     apt-get install -y git libpq-dev sqlite3 libssl3 ca-certificates unzip curl tree jq sudo && \
+#     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# RUN mkdir -p /etc/sudoers.d && \
+# useradd -m -s /bin/bash rust-tools && \
+# echo "rust-tools ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/rust-tools
+
+# # Set working directory
+# WORKDIR /home/rust-tools
+
+# # Copy compiled binaries
+# COPY --from=builder /usr/local/cargo/bin/trunk /usr/local/bin/trunk
+# COPY --from=builder /usr/local/cargo/bin/wasm-bindgen /usr/local/bin/wasm-bindgen
+# COPY --from=builder /usr/local/cargo/bin/dx /usr/local/bin/dx
+# COPY --from=builder /usr/local/cargo/bin/diesel /usr/local/bin/diesel
+
+# # Copy Rust tooling if needed inside container
+# COPY --from=builder /usr/local/cargo /usr/local/cargo
+# COPY --from=builder /usr/local/rustup /usr/local/rustup
+
+# # Add Rust to PATH (optional for dev container use)
+# ENV PATH="/usr/local/cargo/bin:/usr/local/rustup/bin:$PATH"
+
+# # Entrypoint script
+# # COPY ./README.md /home/rust-tools/
+# COPY ./entrypoint.sh /home/rust-tools/
+# RUN chmod +x /home/rust-tools/entrypoint.sh && chown -R rust-tools:rust-tools /home/rust-tools
+
+# USER rust-tools
+# WORKDIR /home/rust-tools
+
+# ENTRYPOINT ["./entrypoint.sh"]
+# CMD ["bash"]
